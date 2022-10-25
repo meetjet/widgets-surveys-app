@@ -22,11 +22,6 @@ export default async (survey_id, user_id, data) => {
     })
   })
   
-  // const { data: {
-  //   getSurvey
-  // } } = await response.json()
-  
-  console.log(await response.json())
-  return 'getSurvey'
+  return await response.json()
 }
 

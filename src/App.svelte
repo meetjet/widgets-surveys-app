@@ -12,38 +12,46 @@
   let localStoragesSurveys;
 
   (async _id => {
-
     if (!_id) {
       return false;
     }
 
     try {
-      survey = await querySurvey(_id);
+      const response = await querySurvey(_id);
 
-      localStoragesSurveys = localStorage.getItem('surveys') ?? "{}";
-      localStoragesSurveys = JSON.parse(localStoragesSurveys);
+      if (response.errors) {
+        hasError = true;
+        console.error(response.errors);
+      } else {
+        survey = response.data.getSurvey;
 
-      if (!localStoragesSurveys[id]) {
-        localStoragesSurveys[id] = { answers: [], ended: false };
+        localStoragesSurveys = localStorage.getItem('surveys') ?? "{}";
+        localStoragesSurveys = JSON.parse(localStoragesSurveys);
+
+        if (!localStoragesSurveys[id]) {
+          localStoragesSurveys[id] = { answers: [], ended: false };
+        }
+
+        startingPoint = localStoragesSurveys[id].answers.length;
+        surveyEnd = localStoragesSurveys[id].ended;
       }
-
-      startingPoint = localStoragesSurveys[id].answers.length;
-      surveyEnd = localStoragesSurveys[id].ended;
     } catch (err) {
       hasError = true;
       console.error(err);
     }
-
   })(id)
 
   async function optionHandler(questionID, optionID) {
     if (startingPoint === survey.questions.length - 1) {
-      loading = true
-      localStoragesSurveys[id].ended = surveyEnd = true
-      localStorage.setItem('surveys', JSON.stringify(localStoragesSurveys));
-
       try {
-        await mutationSurvey(id, 4, localStoragesSurveys[id].answers)
+        const response = await mutationSurvey(id, 4, localStoragesSurveys[id].answers);
+
+        if (response.errors) {
+          hasError = true;
+          console.error(response.errors);
+        } else {
+          localStoragesSurveys[id].ended = surveyEnd = loading = true
+        }
       } catch (err) {
         console.error(err)
       }
@@ -56,18 +64,16 @@
         question_id: questionID,
         option_id: optionID
       });
-
-      localStorage.setItem('surveys', JSON.stringify(localStoragesSurveys));
     }
+
+    localStorage.setItem('surveys', JSON.stringify(localStoragesSurveys));
   }
 </script>
 
 {#if id}
     {#if hasError}
         <div class="border shadow rounded-lg w-1/2 mx-auto p-3 text-center">Something went wrong</div>
-    {/if}
-
-    {#if survey}
+    {:else if survey}
         {#if loading}
             <div class="border shadow rounded-lg w-1/2 mx-auto p-3 text-center">Loading</div>
         {:else if surveyEnd}

@@ -23,9 +23,5 @@ export default async id => {
     })
   })
   
-  const { data: {
-    getSurvey
-  } } = await response.json()
-  
-  return getSurvey
+  return await response.json()
 }
